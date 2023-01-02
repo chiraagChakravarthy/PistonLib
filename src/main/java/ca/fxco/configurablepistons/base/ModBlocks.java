@@ -27,7 +27,6 @@ import ca.fxco.configurablepistons.blocks.pistons.veryStickyPiston.VeryStickyPis
 import ca.fxco.configurablepistons.blocks.slipperyBlocks.BaseSlipperyBlock;
 import ca.fxco.configurablepistons.blocks.slipperyBlocks.SlipperyRedstoneBlock;
 import ca.fxco.configurablepistons.blocks.slipperyBlocks.SlipperySlimeBlock;
-import ca.fxco.configurablepistons.datagen.DatagenInitializer;
 import ca.fxco.configurablepistons.pistonLogic.StickyType;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamilies;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamily;
@@ -48,8 +47,6 @@ import static ca.fxco.configurablepistons.ConfigurablePistons.CUSTOM_CREATIVE_GR
 import static ca.fxco.configurablepistons.ConfigurablePistons.id;
 
 public class ModBlocks {
-
-    private static final boolean DATAGEN_ACTIVE = System.getProperty("fabric-api.datagen") != null;
 
     // Half Blocks
     public static final Block HALF_SLIME_BLOCK = registerBlock("half_slime",
@@ -256,7 +253,6 @@ public class ModBlocks {
     }
 
     public static <T extends Block> T registerBlock(String blockId, T block, boolean autoDatagen) {
-        if (autoDatagen && DATAGEN_ACTIVE) DatagenInitializer.datagenBlockList.add(block);
         Identifier identifier = id(blockId);
         Registry.register(Registry.ITEM, identifier, new BlockItem(block, CUSTOM_CREATIVE_GROUP));
         return Registry.register(Registry.BLOCK, identifier, block);

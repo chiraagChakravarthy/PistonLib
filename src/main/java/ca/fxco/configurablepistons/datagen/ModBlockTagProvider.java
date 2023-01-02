@@ -1,35 +1,32 @@
 package ca.fxco.configurablepistons.datagen;
 
-import java.util.concurrent.CompletableFuture;
-
 import ca.fxco.configurablepistons.ConfigurablePistons;
 import ca.fxco.configurablepistons.base.ModBlocks;
 import ca.fxco.configurablepistons.base.ModTags;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamilies;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamily;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+import net.minecraft.tag.BlockTags;
 import org.slf4j.Logger;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.tag.BlockTags;
 
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 
 public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 	public static final Logger LOGGER = ConfigurablePistons.LOGGER;
 
-	public ModBlockTagProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
-		super(output, registriesFuture);
+	public ModBlockTagProvider(FabricDataGenerator output) {
+		super(output);
 	}
 
 	@Override
-	protected void configure(RegistryWrapper.WrapperLookup registries) {
+	protected void generateTags() {
 		LOGGER.info("Generating block tags...");
 
-		FabricTagBuilder pistonsTag = getOrCreateTagBuilder(ModTags.PISTONS).add(Blocks.PISTON, Blocks.STICKY_PISTON);
-		FabricTagBuilder movingPistonsTag = getOrCreateTagBuilder(ModTags.MOVING_PISTONS).add(Blocks.MOVING_PISTON);
+		FabricTagBuilder<Block> pistonsTag = getOrCreateTagBuilder(ModTags.PISTONS).add(Blocks.PISTON, Blocks.STICKY_PISTON);
+		FabricTagBuilder<Block> movingPistonsTag = getOrCreateTagBuilder(ModTags.MOVING_PISTONS).add(Blocks.MOVING_PISTON);
 
 		for(PistonFamily family : PistonFamilies.getFamilies()) {
 			Block piston = family.getPistonBlock();

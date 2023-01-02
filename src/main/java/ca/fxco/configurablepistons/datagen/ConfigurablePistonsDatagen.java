@@ -13,11 +13,9 @@ public class ConfigurablePistonsDatagen implements DataGeneratorEntrypoint {
 	public void onInitializeDataGenerator(FabricDataGenerator dataGenerator) {
 		LOGGER.info("Starting Configurable Pistons datagen...");
 
-		FabricDataGenerator.Pack pack = dataGenerator.createPack();
-
-		pack.addProvider(ModModelProvider::new);
-		pack.addProvider(ModRecipeProvider::new);
-		pack.addProvider(ModBlockLootTableProvider::new);
-		pack.addProvider(ModBlockTagProvider::new);
+		dataGenerator.addProvider(ModModelProvider::new);
+		dataGenerator.addProvider(ModRecipeProvider::new);
+		dataGenerator.addProvider(ModBlockLootTableProvider::new);
+		dataGenerator.addProvider(ModBlockTagProvider::new);
 	}
 }

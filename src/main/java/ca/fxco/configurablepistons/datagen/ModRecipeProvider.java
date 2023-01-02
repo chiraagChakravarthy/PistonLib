@@ -6,6 +6,7 @@ import ca.fxco.configurablepistons.ConfigurablePistons;
 import ca.fxco.configurablepistons.base.ModBlocks;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamilies;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamily;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import org.slf4j.Logger;
 
 import net.minecraft.block.Block;
@@ -14,20 +15,18 @@ import net.minecraft.data.server.recipe.RecipeJsonProvider;
 import net.minecraft.data.server.recipe.ShapedRecipeJsonBuilder;
 import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
 import net.minecraft.item.Items;
-import net.minecraft.recipe.book.RecipeCategory;
 
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
 
 public class ModRecipeProvider extends FabricRecipeProvider {
 	public static final Logger LOGGER = ConfigurablePistons.LOGGER;
 
-	public ModRecipeProvider(FabricDataOutput output) {
+	public ModRecipeProvider(FabricDataGenerator output) {
 		super(output);
 	}
 
 	@Override
-	public void generate(Consumer<RecipeJsonProvider> exporter) {
+	public void generateRecipes(Consumer<RecipeJsonProvider> exporter) {
 		LOGGER.info("Generating recipes...");
 
 		for(PistonFamily family : PistonFamilies.getFamilies()) {
@@ -51,10 +50,10 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 	}
 
 	public void offerSlipperyBlockRecipe(Consumer<RecipeJsonProvider> exporter, Block slipperyBlock, Block baseBlock) {
-		ShapelessRecipeJsonBuilder.create(RecipeCategory.MISC, slipperyBlock, 1).input(baseBlock).input(Items.POTION).criterion(hasItem(baseBlock), conditionsFromItem(baseBlock)).offerTo(exporter);
+		ShapelessRecipeJsonBuilder.create(slipperyBlock, 1).input(baseBlock).input(Items.POTION).criterion(hasItem(baseBlock), conditionsFromItem(baseBlock)).offerTo(exporter);
 	}
 
 	public void offerStickyPistonRecipe(Consumer<RecipeJsonProvider> exporter, Block stickyPiston, Block regularPiston) {
-		ShapedRecipeJsonBuilder.create(RecipeCategory.REDSTONE, stickyPiston).input('P', regularPiston).input('S', Items.SLIME_BALL).pattern("S").pattern("P").criterion("has_slime_ball", conditionsFromItem(Items.SLIME_BALL)).offerTo(exporter);
+		ShapedRecipeJsonBuilder.create(stickyPiston).input('P', regularPiston).input('S', Items.SLIME_BALL).pattern("S").pattern("P").criterion("has_slime_ball", conditionsFromItem(Items.SLIME_BALL)).offerTo(exporter);
 	}
 }

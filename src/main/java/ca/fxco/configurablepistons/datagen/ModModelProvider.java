@@ -6,6 +6,7 @@ import ca.fxco.configurablepistons.ConfigurablePistons;
 import ca.fxco.configurablepistons.base.ModBlocks;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamilies;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamily;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -17,7 +18,6 @@ import net.minecraft.item.Items;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Identifier;
 
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricModelProvider;
 
 public class ModModelProvider extends FabricModelProvider {
@@ -29,7 +29,7 @@ public class ModModelProvider extends FabricModelProvider {
 	public static final Model TEMPLATE_HALF_BLOCK = new Model(Optional.of(ConfigurablePistons.id("block/template_half_block")), Optional.empty(), TextureKey.TOP, TextureKey.SIDE);
 	public static final Model PISTON_BASE = new Model(Optional.of(new Identifier("block/piston_extended")), Optional.empty(), TextureKey.BOTTOM, TextureKey.SIDE, TextureKey.INSIDE);
 
-	public ModModelProvider(FabricDataOutput output) {
+	public ModModelProvider(FabricDataGenerator output) {
 		super(output);
 	}
 

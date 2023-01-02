@@ -4,29 +4,26 @@ import ca.fxco.configurablepistons.ConfigurablePistons;
 import ca.fxco.configurablepistons.base.ModBlocks;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamilies;
 import ca.fxco.configurablepistons.pistonLogic.families.PistonFamily;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import org.slf4j.Logger;
 
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
 
 public class ModBlockLootTableProvider extends FabricBlockLootTableProvider {
 	public static final Logger LOGGER = ConfigurablePistons.LOGGER;
 
-	protected ModBlockLootTableProvider(FabricDataOutput dataOutput) {
+	protected ModBlockLootTableProvider(FabricDataGenerator dataOutput) {
 		super(dataOutput);
 	}
 
 	@Override
-	public void generate() {
+	public void generateBlockLootTables() {
 		LOGGER.info("Generating block loot tables...");
 
 		for(PistonFamily family : PistonFamilies.getFamilies()) {
 			LOGGER.info("Generating block loot tables for piston family "+family.getId()+"...");
 			if(family.getPistonBlock() != null) addDrop(family.getPistonBlock());
 			if(family.getStickyPistonBlock() != null) addDrop(family.getStickyPistonBlock());
-			if(family.getHeadBlock() != null) excludeFromStrictValidation(family.getHeadBlock());
-			if(family.getArmBlock() != null) excludeFromStrictValidation(family.getArmBlock());
-			if(family.getExtensionBlock() != null) excludeFromStrictValidation(family.getExtensionBlock());
 		}
 
 		LOGGER.info("Finished generating block loot tables for pistons, generating for other blocks...");
