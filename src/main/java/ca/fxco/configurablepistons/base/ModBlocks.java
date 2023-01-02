@@ -7,6 +7,7 @@ import ca.fxco.configurablepistons.blocks.halfBlocks.HalfRedstoneBlock;
 import ca.fxco.configurablepistons.blocks.halfBlocks.HalfSlimeBlock;
 import ca.fxco.configurablepistons.blocks.pistons.FrontPoweredPistonBlock;
 import ca.fxco.configurablepistons.blocks.pistons.PushLimitPistonBlock;
+import ca.fxco.configurablepistons.blocks.pistons.StalePistonBlock;
 import ca.fxco.configurablepistons.blocks.pistons.basePiston.BasicPistonBlock;
 import ca.fxco.configurablepistons.blocks.pistons.basePiston.BasicPistonExtensionBlock;
 import ca.fxco.configurablepistons.blocks.pistons.basePiston.BasicPistonHeadBlock;
@@ -136,6 +137,18 @@ public class ModBlocks {
     );
     public static final LongPistonArmBlock LONG_PISTON_ARM = registerPiston(
             PistonFamilies.LONG, new LongPistonArmBlock()
+    );
+
+    // Stale Piston
+    // A vanilla piston except it cannot be quasi-powered
+    public static final BasicPistonHeadBlock STALE_PISTON_HEAD = registerPiston(
+            PistonFamilies.STALE, new BasicPistonHeadBlock()
+    );
+    public static final BasicPistonBlock STALE_PISTON = registerPiston(
+            PistonFamilies.STALE, new StalePistonBlock(false)
+    );
+    public static final BasicPistonBlock STALE_STICKY_PISTON = registerPiston(
+            PistonFamilies.STALE, new StalePistonBlock(true)
     );
 
     // Strong Piston
