@@ -14,6 +14,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.enums.PistonType;
 import net.minecraft.data.client.*;
+import net.minecraft.item.Items;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,9 @@ class PistonModelProvider extends FabricModelProvider {
             modelGenerator.registerPiston(stickyPiston, baseIdentifier, stickyPistonTextureMap);
             Identifier stickyPistonInventoryId = Models.CUBE_BOTTOM_TOP.upload(stickyPiston, "_inventory",
                     baseTextureMap.copyAndAdd(TextureKey.TOP, stickyPistonId), modelGenerator.modelCollector);
-            modelGenerator.registerParentedItemModel(stickyPiston, stickyPistonInventoryId);
+            if (stickyPiston.asItem() != Items.AIR) { // Can be air if no creativeGroup is assigned
+                modelGenerator.registerParentedItemModel(stickyPiston, stickyPistonInventoryId);
+            }
         }
     }
 

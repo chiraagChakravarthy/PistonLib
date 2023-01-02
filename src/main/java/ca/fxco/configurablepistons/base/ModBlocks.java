@@ -131,7 +131,7 @@ public class ModBlocks {
     public static final LongPistonBlock LONG_PISTON = registerPiston(
             PistonFamilies.LONG, new LongPistonBlock(false), null
     );
-    public static final BasicPistonBlock LONG_STICKY_PISTON = registerPiston(
+    public static final LongPistonBlock LONG_STICKY_PISTON = registerPiston(
             PistonFamilies.LONG, new LongPistonBlock(true), null
     );
     public static final LongPistonArmBlock LONG_PISTON_ARM = registerPiston(
