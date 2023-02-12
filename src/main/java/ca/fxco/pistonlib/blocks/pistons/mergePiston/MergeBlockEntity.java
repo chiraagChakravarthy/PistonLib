@@ -1,9 +1,15 @@
 package ca.fxco.pistonlib.blocks.pistons.mergePiston;
 
+import ca.fxco.pistonlib.PistonLibConfig;
 import ca.fxco.pistonlib.base.ModBlockEntities;
+import ca.fxco.pistonlib.base.ModBlocks;
+import ca.fxco.pistonlib.base.ModPistonFamilies;
+import ca.fxco.pistonlib.blocks.pistons.basePiston.BasicMovingBlockEntity;
 import ca.fxco.pistonlib.helpers.Utils;
 import ca.fxco.pistonlib.impl.BlockEntityMerging;
 import ca.fxco.pistonlib.pistonLogic.accessible.ConfigurablePistonMerging;
+import ca.fxco.pistonlib.pistonLogic.accessible.ConfigurablePistonStickiness;
+import ca.fxco.pistonlib.pistonLogic.sticky.StickyType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
@@ -20,6 +26,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.piston.MovingPistonBlock;
 import net.minecraft.world.level.block.piston.PistonMath;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
@@ -30,9 +37,12 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static net.minecraft.world.level.block.piston.PistonMovingBlockEntity.*;
+import static net.minecraft.world.level.block.piston.PistonMovingBlockEntity.NOCLIP;
 
 public class MergeBlockEntity extends BlockEntity {
 
@@ -71,10 +81,6 @@ public class MergeBlockEntity extends BlockEntity {
         return false;
     }
 
-    public void doMerge(BlockState state, Direction dir) {
-        mergingBlocks.put(dir, new MergeData(state));
-    }
-
     public void doMerge(BlockState state, Direction dir, float speed) {
         MergeData data = new MergeData(state);
         data.setSpeed(speed);
@@ -88,64 +94,15 @@ public class MergeBlockEntity extends BlockEntity {
     }
 
     public static void tick(Level level, BlockPos blockPos, BlockState blockState, MergeBlockEntity mergeBlockEntity) {
-        byte count = 0;
         for (MergeData data : mergeBlockEntity.mergingBlocks.values()) {
             data.setLastProgress(data.getProgress());
             float lastProgress = data.getLastProgress();
-            if (lastProgress >= 1.0F) {
-                count++;
-            }
             float f = lastProgress + 0.5F * data.getSpeed();
             mergeBlockEntity.moveCollidedEntities(f);
             //moveStuckEntities(level, blockPos, f, mergeBlockEntity);
             data.setProgress(Math.min(f, 1.0F));
         }
-        if (count == mergeBlockEntity.mergingBlocks.size()) { // All ready
-            level.removeBlockEntity(blockPos);
-            mergeBlockEntity.setRemoved();
-
-            BlockState initialState = mergeBlockEntity.initialState;
-            if (initialState == null) return;
-            ConfigurablePistonMerging merge = (ConfigurablePistonMerging) initialState.getBlock();
-            BlockState newState = null;
-            if (count > 1) {
-                Map<Direction, BlockState> states = new HashMap<>();
-                for (Map.Entry<Direction, MergeData> entry : mergeBlockEntity.mergingBlocks.entrySet()) {
-                    states.put(entry.getKey(), entry.getValue().getState());
-                }
-                newState = merge.doMultiMerge(level, blockPos, states, initialState);
-            } else {
-                for (Map.Entry<Direction, MergeData> entry : mergeBlockEntity.mergingBlocks.entrySet()) {
-                    newState = merge.doMerge(entry.getValue().getState(), level, blockPos, initialState, entry.getKey());
-                    break;
-                }
-            }
-            if (newState == null) {
-                newState = Blocks.AIR.defaultBlockState();
-            }
-            BlockState blockState2 = Block.updateFromNeighbourShapes(newState, level, blockPos);
-            if (blockState2.isAir()) {
-                level.setBlock(blockPos, newState, Block.UPDATE_MOVE_BY_PISTON | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS);
-                Block.updateOrDestroy(newState, blockState2, level, blockPos, Block.UPDATE_ALL);
-            } else {
-                if (mergeBlockEntity.initialBlockEntity != null) {
-                    BlockEntityMerging initialBem = (BlockEntityMerging)mergeBlockEntity.initialBlockEntity;
-                    mergeBlockEntity.initialBlockEntity.setLevel(level);
-                    mergeBlockEntity.initialBlockEntity.setBlockState(blockState2);
-                    initialBem.beforeInitialFinalMerge(blockState2, mergeBlockEntity.mergingBlocks);
-                    for (MergeData data : mergeBlockEntity.mergingBlocks.values()) {
-                        if (data.hasBlockEntity()) {
-                            ((BlockEntityMerging)data.getBlockEntity()).onAdvancedFinalMerge(mergeBlockEntity.initialBlockEntity);
-                        }
-                    }
-                    initialBem.afterInitialFinalMerge(blockState2, mergeBlockEntity.mergingBlocks);
-                    Utils.setBlockWithEntity(level, blockPos, blockState2, mergeBlockEntity.initialBlockEntity, Block.UPDATE_MOVE_BY_PISTON | Block.UPDATE_ALL);
-                } else {
-                    level.setBlock(blockPos, blockState2, Block.UPDATE_MOVE_BY_PISTON | Block.UPDATE_ALL);
-                }
-                level.neighborChanged(blockPos, blockState2.getBlock(), blockPos);
-            }
-        }
+        mergeBlockEntity.tryFinish();
     }
 
     public @Nullable BlockEntity getInitialBlockEntity() {
@@ -315,6 +272,117 @@ public class MergeBlockEntity extends BlockEntity {
         }
     }
 
+    public void tryFinish(){
+        int count = 0;
+        for(MergeData data : mergingBlocks.values()){
+            if(data.lastProgress<1){
+                return;
+            }
+            count++;
+        }
+        BlockPos blockPos = worldPosition;
+        level.removeBlockEntity(blockPos);
+        setRemoved();
+
+        BlockState initialState = this.initialState;
+        if (initialState == null) return;
+        ConfigurablePistonMerging merge = (ConfigurablePistonMerging) initialState.getBlock();
+        BlockState newState = null;
+        if (count > 1) {
+            Map<Direction, BlockState> states = new HashMap<>();
+            for (Map.Entry<Direction, MergeData> entry : mergingBlocks.entrySet()) {
+                states.put(entry.getKey(), entry.getValue().getState());
+            }
+            newState = merge.doMultiMerge(level, blockPos, states, initialState);
+        } else {
+            for (Map.Entry<Direction, MergeData> entry : mergingBlocks.entrySet()) {
+                newState = merge.doMerge(entry.getValue().getState(), level, blockPos, initialState, entry.getKey());
+                break;
+            }
+        }
+        if (newState == null) {
+            newState = Blocks.AIR.defaultBlockState();
+        }
+        BlockState blockState2 = Block.updateFromNeighbourShapes(newState, level, blockPos);
+        if (blockState2.isAir()) {
+            level.setBlock(blockPos, newState, Block.UPDATE_MOVE_BY_PISTON | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS);
+            Block.updateOrDestroy(newState, blockState2, level, blockPos, Block.UPDATE_ALL);
+        } else {
+            if (initialBlockEntity != null) {
+                BlockEntityMerging initialBem = (BlockEntityMerging)initialBlockEntity;
+                initialBlockEntity.setLevel(level);
+                initialBlockEntity.setBlockState(blockState2);
+                initialBem.beforeInitialFinalMerge(blockState2, mergingBlocks);
+                for (MergeData data : mergingBlocks.values()) {
+                    if (data.hasBlockEntity()) {
+                        ((BlockEntityMerging)data.getBlockEntity()).onAdvancedFinalMerge(initialBlockEntity);
+                    }
+                }
+                initialBem.afterInitialFinalMerge(blockState2, mergingBlocks);
+                Utils.setBlockWithEntity(level, blockPos, blockState2, initialBlockEntity, Block.UPDATE_MOVE_BY_PISTON | Block.UPDATE_ALL);
+            } else {
+                level.setBlock(blockPos, blockState2, Block.UPDATE_MOVE_BY_PISTON | Block.UPDATE_ALL);
+            }
+            level.neighborChanged(blockPos, blockState2.getBlock(), blockPos);
+        }
+    }
+
+    public void finalTick(Direction facing) {
+        finalTick(facing, false);
+    }
+
+    public void finalTick(Direction facing, boolean skipStickiness) {
+        if(this.level == null)
+            return;
+        if(!mergingBlocks.containsKey(facing))
+            return;
+
+        MergeData data = mergingBlocks.get(facing);
+        float progressO = data.lastProgress;
+        data.setAllProgress(1);
+        tryFinish();
+
+        if (!skipStickiness && PistonLibConfig.strongBlockDropping) {
+            BlockState movedState = data.state;
+            ConfigurablePistonStickiness stick = (ConfigurablePistonStickiness) movedState.getBlock();
+
+            if (stick.usesConfigurablePistonStickiness() && stick.isSticky(movedState)) {
+                this.finalTickStuckNeighbors(stick.stickySides(movedState), facing, progressO);
+            }
+        }
+    }
+
+    public void finalTickStuckNeighbors(Map<Direction, StickyType> stickyTypes, Direction movementDirection, float progressO) {
+        for (Map.Entry<Direction, StickyType> entry : stickyTypes.entrySet()) {
+            StickyType stickyType = entry.getValue();
+
+            if (stickyType.ordinal() < StickyType.STRONG.ordinal()) { // only strong or fused
+                continue;
+            }
+
+            Direction dir = entry.getKey();
+            BlockPos neighborPos = this.worldPosition.relative(dir);
+            BlockState neighborState = this.level.getBlockState(neighborPos);
+
+            if (neighborState.getBlock() instanceof MovingPistonBlock mpb) {
+                BlockEntity blockEntity = this.level.getBlockEntity(neighborPos);
+
+                if (blockEntity instanceof BasicMovingBlockEntity mbe) {
+                    if (movementDirection == mbe.getMovementDirection() && progressO == mbe.progress) {
+                        // Maybe do a stick test?
+                        mbe.finalTick();
+                    }
+                }
+            }
+            if(neighborState.is(ModBlocks.MERGE_BLOCK)){
+                BlockEntity blockEntity = this.level.getBlockEntity(neighborPos);
+                if(blockEntity instanceof MergeBlockEntity mbe){
+                    mbe.finalTick(movementDirection);
+                }
+            }
+        }
+    }
+
     public static class MergeData {
 
         private final BlockState state;
@@ -322,7 +390,6 @@ public class MergeBlockEntity extends BlockEntity {
         private float progress;
         private float lastProgress;
         private float speed = 1F;
-
         public MergeData(BlockState state) {
             this(null, state);
         }

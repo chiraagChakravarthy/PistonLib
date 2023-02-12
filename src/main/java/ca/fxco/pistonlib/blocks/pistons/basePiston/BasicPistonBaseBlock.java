@@ -5,7 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import ca.fxco.pistonlib.base.ModBlocks;
+import ca.fxco.pistonlib.base.ModPistonFamilies;
 import ca.fxco.pistonlib.base.ModTags;
+import ca.fxco.pistonlib.blocks.pistons.mergePiston.MergeBlockEntity;
 import ca.fxco.pistonlib.helpers.Utils;
 import ca.fxco.pistonlib.impl.QLevel;
 import ca.fxco.pistonlib.pistonLogic.MotionType;
@@ -224,6 +227,14 @@ public class BasicPistonBaseBlock extends DirectionalBlock {
 
                     if (frontBlockEntity instanceof PistonMovingBlockEntity mbe && mbe.getDirection() == facing && mbe.isExtending()) {
                         mbe.finalTick();
+                        droppedBlock = true;
+                    }
+                }
+
+                if(frontState.is(ModBlocks.MERGE_BLOCK) && family == ModPistonFamilies.MERGE){
+                    BlockEntity frontBlockEntity = level.getBlockEntity(frontPos);
+                    if(frontBlockEntity instanceof MergeBlockEntity mbe){
+                        mbe.finalTick(facing);
                         droppedBlock = true;
                     }
                 }

@@ -19,6 +19,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -27,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+
+import static net.minecraft.world.level.block.DirectionalBlock.FACING;
 
 public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, MenuProvider, BlockEntityMerging {
 
@@ -88,8 +92,13 @@ public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements
             for (int slot : EXTRACTION_SLOTS) {
                 ItemStack stack = getItem(slot);
                 if (!stack.isEmpty() && stack.getItem() instanceof BlockItem) {
+                    Block removedBlk = ((BlockItem)removeItem(slot, 1).getItem()).getBlock();
+                    BlockState removedState = removedBlk.defaultBlockState();
+                    if(removedBlk instanceof DirectionalBlock){
+                        removedState = removedState.setValue(FACING, direction.getOpposite());
+                    }
                     Pair<BlockState, BlockState> unmergedStates = new Pair<>(
-                            ((BlockItem)removeItem(slot, 1).getItem()).getBlock().defaultBlockState(),
+                            removedState,
                             state
                     );
                     this.setChanged();
