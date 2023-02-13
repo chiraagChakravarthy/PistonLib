@@ -4,7 +4,7 @@ import ca.fxco.pistonlib.PistonLibConfig;
 import ca.fxco.pistonlib.base.ModBlockEntities;
 import ca.fxco.pistonlib.blocks.pistons.mergePiston.MergeBlockEntity;
 import ca.fxco.pistonlib.helpers.NbtUtils;
-import ca.fxco.pistonlib.impl.BlockEntityMerging;
+import ca.fxco.pistonlib.pistonLogic.internal.BlockEntityBaseMerging;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,14 +32,16 @@ import java.util.Map;
 
 import static net.minecraft.world.level.block.DirectionalBlock.FACING;
 
-public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, MenuProvider, BlockEntityMerging {
+public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, MenuProvider, BlockEntityBaseMerging {
 
     // Players will not be able to modify this crafting inventory/container
     // The only world interactions will be unmerging & pulling items from below,
     // although you can only pull the output item if it's not a block item or if it has a rarity higher than common
 
     private static final int RESULT_SLOT = 9;
-    private static final int[] EXTRACTION_SLOTS = {RESULT_SLOT, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+    private static final int[] PISTON_EXTRACTION = {RESULT_SLOT, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+    private static final int[] HOPPER_EXTRACTION = {RESULT_SLOT, 0, 1, 2, 3, 4, 5, 6, 7, 8};
     private static final int[] NO_SLOTS = new int[0];
 
     protected final CraftingContainer items;
@@ -63,14 +65,47 @@ public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements
     }
 
     @Override
-    public boolean canMerge(BlockState state, BlockState mergingIntoState, Direction dir) {
-        return areAnySlotsLeft();
+    public boolean doInitialMerging() {
+        return true;
     }
 
     @Override
-    public boolean canMultiMerge(BlockState state, BlockState mergingIntoState, Direction dir,
-                                 Map<Direction, MergeBlockEntity.MergeData> currentlyMerging) {
-        return getRemainingSlotCount() - currentlyMerging.size() > 0; // are any spaces left?
+    public boolean canMerge(BlockState state, BlockEntity blockEntity, BlockState mergingIntoState, Direction dir) {
+        int containerSize = computeContainerSize(blockEntity);
+        return getRemainingSlotCount() - 1 - containerSize >= 0;
+    }
+
+    @Override
+    public boolean canMultiMerge(BlockState state, BlockEntity blockEntity, BlockState mergingIntoState,
+                                 Direction dir, Map<Direction, MergeBlockEntity.MergeData> currentlyMerging) {
+        int mergingCount = 0;
+        for(MergeBlockEntity.MergeData data : currentlyMerging.values()){
+            mergingCount += computeContainerSize(data.getBlockEntity())+1;
+        }
+        int containerSize = computeContainerSize(blockEntity);
+        return getRemainingSlotCount() - mergingCount - containerSize - 1 >= 0;
+    }
+
+    private Container extractContainer(BlockEntity be){
+        if(be instanceof WorldlyContainerHolder wch){
+            return wch.getContainer(be.getBlockState(), be.getLevel(), be.getBlockPos());
+        }
+        if(be instanceof Container){
+            return (Container) be;
+        }
+        return null;
+    }
+
+    private int computeContainerSize(BlockEntity be){
+        Container container = extractContainer(be);
+        if(container==null){
+            return 0;
+        }
+        int size = 0;
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            size += container.getItem(i).getCount();
+        }
+        return size;
     }
 
     @Override
@@ -89,7 +124,7 @@ public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements
     @Override
     public @Nullable Pair<BlockState, BlockState> doUnMerge(BlockState state, Direction direction) {
         if (PistonLibConfig.extractBlocksFromAutoCrafting) {
-            for (int slot : EXTRACTION_SLOTS) {
+            for (int slot : PISTON_EXTRACTION) {
                 ItemStack stack = getItem(slot);
                 if (!stack.isEmpty() && stack.getItem() instanceof BlockItem) {
                     Block removedBlk = ((BlockItem)removeItem(slot, 1).getItem()).getBlock();
@@ -124,6 +159,16 @@ public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements
     public void afterInitialFinalMerge(BlockState finalState, Map<Direction, MergeBlockEntity.MergeData> mergedData) {
         for (MergeBlockEntity.MergeData data : mergedData.values()) {
             setItem(getNextSlot(), data.getState().getBlock().asItem().getDefaultInstance());
+            Container container = extractContainer(data.getBlockEntity());
+            if(container==null) continue;
+            for (int i = 0; i < container.getContainerSize(); i++) {
+                ItemStack stack = container.getItem(i);
+                for (int j = 0; j < stack.getCount(); j++) {
+                    setItem(getNextSlot(), stack.copyWithCount(1));
+                }
+                stack.setCount(0);
+            }
+            container.clearContent();//just in case someone tries to be clever
         }
     }
 
@@ -146,15 +191,6 @@ public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements
         return -1;
     }
 
-    private boolean areAnySlotsLeft() {
-        for(int x = 0; x < this.items.getContainerSize(); ++x) {
-            if (this.getItem(x).isEmpty()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     //
     // Container Stuff, eww
     //
@@ -171,7 +207,7 @@ public class AutoCraftingBlockEntity extends BaseContainerBlockEntity implements
 
     @Override
     public int[] getSlotsForFace(Direction direction) {
-        return direction == Direction.DOWN ? EXTRACTION_SLOTS : NO_SLOTS;
+        return direction == Direction.DOWN ? HOPPER_EXTRACTION : NO_SLOTS;
     }
 
     @Override

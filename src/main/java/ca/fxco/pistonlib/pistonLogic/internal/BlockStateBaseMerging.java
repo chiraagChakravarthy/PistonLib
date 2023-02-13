@@ -14,7 +14,7 @@ import java.util.Map;
 public interface BlockStateBaseMerging {
 
     // These methods are only used if `usesConfigurablePistonMerging` return true
-    // This allows for configurable & conditional mering/compression block logic
+    // This allows for configurable & conditional merging/compression block logic
     boolean usesConfigurablePistonMerging();
 
 

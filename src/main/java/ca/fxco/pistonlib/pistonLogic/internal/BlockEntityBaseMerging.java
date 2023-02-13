@@ -1,4 +1,4 @@
-package ca.fxco.pistonlib.impl;
+package ca.fxco.pistonlib.pistonLogic.internal;
 
 import ca.fxco.pistonlib.blocks.pistons.mergePiston.MergeBlockEntity;
 import com.mojang.datafixers.util.Pair;
@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * This is for handling merging the block entities.
  */
-public interface BlockEntityMerging {
+public interface BlockEntityBaseMerging {
 
     //
     // These methods are to control if merging should happen
@@ -21,22 +21,23 @@ public interface BlockEntityMerging {
     /**
      * Returns if it will be able to merge both states together
      */
-    default boolean canMerge(BlockState state, BlockState mergingIntoState, Direction dir) {
-        return true;
+    default boolean canMerge(BlockState state, BlockEntity blockEntity, BlockState mergingIntoState, Direction dir) {
+        return false;
     }
 
     /**
      * While merging with a block, is this block able to merge with other blocks from other directions?
      */
-    default boolean canMultiMerge(BlockState state, BlockState mergingIntoState, Direction dir, Map<Direction, MergeBlockEntity.MergeData> currentlyMerging) {
-        return true;
+    default boolean canMultiMerge(BlockState state, BlockEntity blockEntity, BlockState mergingIntoState,
+                                  Direction dir, Map<Direction, MergeBlockEntity.MergeData> currentlyMerging) {
+        return false;
     }
 
     /**
      * Returns if it will be able to unmerge into two different states
      */
     default boolean canUnMerge(BlockState state, BlockState neighborState, Direction dir) {
-        return true;
+        return false;
     }
 
 
@@ -51,7 +52,7 @@ public interface BlockEntityMerging {
      * block entity will not be stored.
      */
     default boolean shouldStoreSelf(MergeBlockEntity mergeBlockEntity) {
-        return false;
+        return true;
     }
 
 
@@ -87,7 +88,7 @@ public interface BlockEntityMerging {
      * If it stays it won't replace the block entity
      */
     default boolean shouldUnMergeBlockEntity(BlockState state, Direction direction) {
-        return true;
+        return false;
     }
 
 
@@ -100,7 +101,7 @@ public interface BlockEntityMerging {
      * If false, the block entity is removed and the merge will finish like normally.
      */
     default boolean doInitialMerging() {
-        return true;
+        return false;
     }
 
     /**

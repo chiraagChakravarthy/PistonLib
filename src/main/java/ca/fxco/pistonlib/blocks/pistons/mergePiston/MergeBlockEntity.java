@@ -3,10 +3,9 @@ package ca.fxco.pistonlib.blocks.pistons.mergePiston;
 import ca.fxco.pistonlib.PistonLibConfig;
 import ca.fxco.pistonlib.base.ModBlockEntities;
 import ca.fxco.pistonlib.base.ModBlocks;
-import ca.fxco.pistonlib.base.ModPistonFamilies;
 import ca.fxco.pistonlib.blocks.pistons.basePiston.BasicMovingBlockEntity;
 import ca.fxco.pistonlib.helpers.Utils;
-import ca.fxco.pistonlib.impl.BlockEntityMerging;
+import ca.fxco.pistonlib.pistonLogic.internal.BlockEntityBaseMerging;
 import ca.fxco.pistonlib.pistonLogic.accessible.ConfigurablePistonMerging;
 import ca.fxco.pistonlib.pistonLogic.accessible.ConfigurablePistonStickiness;
 import ca.fxco.pistonlib.pistonLogic.sticky.StickyType;
@@ -70,13 +69,13 @@ public class MergeBlockEntity extends BlockEntity {
         return !mergingBlocks.containsKey(pushDirection);
     }
 
-    public boolean canMerge(BlockState state, Direction dir) {
+    public boolean canMerge(BlockState state, BlockEntity blockEntity, Direction dir) {
         ConfigurablePistonMerging merge = (ConfigurablePistonMerging) initialState.getBlock();
         if (merge.canMultiMerge() &&
                 merge.canMultiMerge(state, level, worldPosition, initialState, dir, mergingBlocks)) {
             return initialBlockEntity == null || (!merge.getBlockEntityMergeRules().checkMerge() ||
-                    initialBlockEntity instanceof BlockEntityMerging bem &&
-                    bem.canMultiMerge(state, initialState, dir, mergingBlocks));
+                    initialBlockEntity instanceof BlockEntityBaseMerging bem &&
+                    bem.canMultiMerge(state, blockEntity, initialState, dir, mergingBlocks));
         }
         return false;
     }
@@ -309,13 +308,13 @@ public class MergeBlockEntity extends BlockEntity {
             Block.updateOrDestroy(newState, blockState2, level, blockPos, Block.UPDATE_ALL);
         } else {
             if (initialBlockEntity != null) {
-                BlockEntityMerging initialBem = (BlockEntityMerging)initialBlockEntity;
+                BlockEntityBaseMerging initialBem = (BlockEntityBaseMerging)initialBlockEntity;
                 initialBlockEntity.setLevel(level);
                 initialBlockEntity.setBlockState(blockState2);
                 initialBem.beforeInitialFinalMerge(blockState2, mergingBlocks);
                 for (MergeData data : mergingBlocks.values()) {
                     if (data.hasBlockEntity()) {
-                        ((BlockEntityMerging)data.getBlockEntity()).onAdvancedFinalMerge(initialBlockEntity);
+                        ((BlockEntityBaseMerging)data.getBlockEntity()).onAdvancedFinalMerge(initialBlockEntity);
                     }
                 }
                 initialBem.afterInitialFinalMerge(blockState2, mergingBlocks);

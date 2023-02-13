@@ -75,8 +75,19 @@ public interface ConfigurablePistonMerging {
      * It allows us to quickly know if the block entity should be loaded and checked against
      */
     default MergeRule getBlockEntityMergeRules() {
-        return MergeRule.NEVER;
+        return MergeRule.ALWAYS;
     }
+    /*
+    imo having a rule that can prevent your merge code from being able to access the tile entity
+    of a block merging into it, then proceeding to set that rule to not allow this by default is dumb.
+    im switching the default here. If someone wants a block to be exempt from all tile entity merging for whatever
+    reason they can override
+    the performance loss from accessing the tile entity on merge is so minimal its not worth compromising
+    the usability of the api over. In any contraption, you're going to be doing normal mbe way more than
+    merging anyways
+    If the block isn't a tile entity block, just don't look for a tile entity regardless of the rule
+    (added in mergepistonbaseblock$move())
+     */
 
     enum MergeRule {
         NEVER(false, false),

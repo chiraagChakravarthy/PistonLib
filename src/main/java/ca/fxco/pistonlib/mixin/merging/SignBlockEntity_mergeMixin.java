@@ -2,7 +2,7 @@ package ca.fxco.pistonlib.mixin.merging;
 
 import ca.fxco.pistonlib.blocks.pistons.mergePiston.MergeBlockEntity;
 import ca.fxco.pistonlib.helpers.Utils;
-import ca.fxco.pistonlib.impl.BlockEntityMerging;
+import ca.fxco.pistonlib.pistonLogic.internal.BlockEntityBaseMerging;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(SignBlockEntity.class)
-public abstract class SignBlockEntity_mergeMixin implements BlockEntityMerging {
+public abstract class SignBlockEntity_mergeMixin implements BlockEntityBaseMerging {
 
     @Shadow public abstract boolean hasGlowingText();
 
@@ -22,6 +22,11 @@ public abstract class SignBlockEntity_mergeMixin implements BlockEntityMerging {
     @Shadow @Final public static int LINES;
 
     @Shadow public abstract Component getMessage(int i, boolean bl);
+
+    @Override
+    public boolean doInitialMerging() {
+        return true;
+    }
 
     @Override
     public boolean shouldStoreSelf(MergeBlockEntity mergeBlockEntity) {

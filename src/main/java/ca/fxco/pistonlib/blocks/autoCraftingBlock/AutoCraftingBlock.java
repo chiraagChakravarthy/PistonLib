@@ -2,7 +2,7 @@ package ca.fxco.pistonlib.blocks.autoCraftingBlock;
 
 import ca.fxco.pistonlib.PistonLibConfig;
 import ca.fxco.pistonlib.base.ModBlocks;
-import ca.fxco.pistonlib.impl.BlockEntityMerging;
+import ca.fxco.pistonlib.pistonLogic.internal.BlockEntityBaseMerging;
 import ca.fxco.pistonlib.pistonLogic.accessible.ConfigurablePistonBehavior;
 import ca.fxco.pistonlib.pistonLogic.accessible.ConfigurablePistonMerging;
 import com.mojang.datafixers.util.Pair;
@@ -137,6 +137,6 @@ public class AutoCraftingBlock extends BaseEntityBlock implements ConfigurablePi
     @Override
     public boolean canPistonPull(Level level, BlockPos pos, BlockState state, Direction direction) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
-        return blockEntity instanceof BlockEntityMerging bem && bem.canUnMerge(state, null, direction);
+        return blockEntity instanceof BlockEntityBaseMerging bem && bem.canUnMerge(state, null, direction);
     }
 }
